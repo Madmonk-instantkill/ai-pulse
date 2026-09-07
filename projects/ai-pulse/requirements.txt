@@ -1,0 +1,27 @@
+# Orchestration
+crewai
+crewai-tools
+
+# LLM provider (Anthropic Claude via CrewAI/LiteLLM)
+anthropic
+
+# Data collection
+requests
+arxiv
+feedparser
+beautifulsoup4
+
+# Document processing
+pymupdf
+tiktoken
+
+# Schema & config
+pydantic
+python-dotenv
+pyyaml
+
+# Reliability
+tenacity
+
+# PDF report generation
+reportlab

@@ -1,0 +1,13 @@
+.aider*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets
+.env
+
+# ai-pulse runtime data (cache/output json files, keep dirs via .gitkeep)
+projects/ai-pulse/cache/*.json
+projects/ai-pulse/outputs/*/
