@@ -1,1 +1,54 @@
-# collect_candidates_task, dedup_enrich_task, ranking_task -- defined here once we build this crew.
+# ranking_task -- still to be defined.
+
+collect_and_deduplicate_task:
+  description: >
+    Use the Paper Discovery tool to collect candidate AI/LLM research
+    papers from arXiv, OpenAlex, and Hugging Face, and deduplicate them
+    by arXiv ID. Call the tool once, using its default batch sizes.
+  expected_output: >
+    The full deduplicated list of candidate papers returned by the Paper
+    Discovery tool, with no papers added, removed, or altered.
+  agent: scout_agent
+
+relevance_filter_task:
+  description: >
+    For every paper in the deduplicated list collected in the previous
+    task, read its title and abstract and judge whether it genuinely
+    belongs in an AI/LLM research digest.
+
+    Papers to KEEP focus on one or more of these areas:
+      1. Large language models and foundation models
+      2. Fine-tuning, LoRA, QLoRA, and post-training
+      3. RLHF, DPO, RLVR, and reinforcement learning for language models
+      4. LLM agents, reasoning, tool use, and planning
+      5. RAG, context compression, and long-context models
+      6. Multimodal LLMs, including vision-language and audio-language
+         models
+      7. Efficient training, inference optimization, and model
+         compression
+
+    Papers to DISCARD, even if they mention AI or LLMs in passing:
+      - Survey or review papers, unless the survey itself is a major,
+        widely-relevant contribution
+      - Opinion or viewpoint papers
+      - Education or student prompt-engineering papers
+      - Healthcare applications or clinical case studies
+      - Enterprise chatbot adoption reports
+      - Any paper whose primary subject is a different field (for
+        example robotics, physics, medicine, or finance) that merely
+        uses an LLM as one tool among many, rather than being
+        fundamentally about advancing AI/LLM capability itself
+
+    A paper can be highly technical -- that is not a reason to discard
+    it. Judge only whether it is genuinely AI/LLM research, not whether
+    it would be easy for a beginner to read.
+
+    Produce exactly one decision per paper in the list. Do not skip any
+    paper, and do not invent papers that were not in the list.
+  expected_output: >
+    One decision per paper in the deduplicated list, each with the
+    paper's arxiv_id, a keep true/false verdict, and a short reason for
+    that verdict.
+  agent: scout_agent
+  context:
+    - collect_and_deduplicate_task

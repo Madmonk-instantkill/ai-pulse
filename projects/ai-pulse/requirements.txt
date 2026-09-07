@@ -1,8 +1,9 @@
 # Orchestration
-crewai
+crewai[google-genai]
 crewai-tools
 
-# LLM provider (Anthropic Claude via CrewAI/LiteLLM)
+# LLM provider (Google Gemini free tier, via CrewAI's native provider;
+# anthropic kept installed too in case we switch back)
 anthropic
 
 # Data collection
