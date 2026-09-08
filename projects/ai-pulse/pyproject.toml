@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-pulse"
+version = "0.1.0"
+description = "Autonomous CrewAI multi-agent system that discovers, ranks, and digests AI/LLM research into a source-verified PDF digest."
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = ["src"]

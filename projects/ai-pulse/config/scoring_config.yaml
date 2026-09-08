@@ -1,2 +1,17 @@
-# Scoring weights for the Ranking Agent (Discovery Crew).
-# Placeholder -- filled in when we build the scoring/ranking task.
+# Scoring weights for the Ranking stage (spec section 6). Kept in YAML,
+# not hardcoded, so the formula can be tuned without touching ranking.py.
+
+upvote_weight: 0.25
+citation_velocity_weight: 0.25
+lead_h_index_weight: 0.15
+recency_weight: 0.20
+cross_source_weight: 0.15
+
+# Flat bonus for a lead author above this h-index -- a preference signal,
+# not an exclusion rule (spec section 6, Problem #3).
+lead_author_h_index_priority_threshold: 30
+lead_author_priority_bonus: 0.05
+
+# A paper published today scores 1.0 on recency; papers older than this
+# many days score 0.
+recency_window_days: 30

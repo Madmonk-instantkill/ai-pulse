@@ -6,7 +6,7 @@ Copyright (c) 2026 Amit Upadhyay. All rights reserved.
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 
-from ai_pulse.schemas import RelevanceFilterResult
+from ai_pulse.schemas import PaperCollectionResult, RelevanceFilterResult
 from ai_pulse.tools.discovery_tool import DiscoveryTool
 
 
@@ -39,8 +39,14 @@ class DiscoveryCrew:
     @task
     def collect_and_deduplicate_task(self) -> Task:
         """Task 1: call the Paper Discovery tool and return the
-        deduplicated candidate list."""
-        return Task(config=self.tasks_config["collect_and_deduplicate_task"])
+        deduplicated candidate list. output_pydantic is set explicitly
+        here (a real Python class reference, same reason as Task 2) so
+        the Flow can reliably read the full paper list back afterward,
+        not just free-form text."""
+        return Task(
+            config=self.tasks_config["collect_and_deduplicate_task"],
+            output_pydantic=PaperCollectionResult,
+        )
 
     @task
     def relevance_filter_task(self) -> Task:

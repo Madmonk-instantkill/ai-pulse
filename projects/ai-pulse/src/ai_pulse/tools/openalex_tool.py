@@ -136,7 +136,7 @@ def _to_paper_record(work: dict) -> Optional[PaperRecord]:
         sources=["openalex"],
         source_count=1,
         citation_count=work.get("cited_by_count", 0),
-        ss_match=True,  # a real citation count is available, just not from Semantic Scholar
+        citation_confirmed=True,  # a real citation count is available
     )
 
 

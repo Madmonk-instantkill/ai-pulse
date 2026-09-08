@@ -3,6 +3,7 @@ Written by Amit Upadhyay aka Madmonk-instantkill
 Copyright (c) 2026 Amit Upadhyay. All rights reserved.
 """
 
+from datetime import date, timedelta
 from typing import Type
 
 from crewai.tools import BaseTool
@@ -12,6 +13,20 @@ from ai_pulse.schemas import PaperRecord
 from ai_pulse.tools.arxiv_tool import ArxivSearchTool
 from ai_pulse.tools.huggingface_tool import HuggingFaceSearchTool
 from ai_pulse.tools.openalex_tool import OpenAlexSearchTool
+
+# OpenAlex's sort=publication_date:desc does not always sort strictly by
+# the paper's true publish date (older papers occasionally leak through,
+# likely sorted by an internal indexing/update date instead). Capping
+# candidates at 90 days old is a simple, deterministic backstop against
+# that, applied right after dedup so stale papers never reach the LLM
+# relevance judgment or the enrichment API calls either.
+MAX_PAPER_AGE_DAYS = 90
+
+
+def _filter_recent_papers(records: list[PaperRecord]) -> list[PaperRecord]:
+    """Drop any paper older than MAX_PAPER_AGE_DAYS."""
+    cutoff = date.today() - timedelta(days=MAX_PAPER_AGE_DAYS)
+    return [record for record in records if record.published_date >= cutoff]
 
 
 def _prefer_arxiv(records: list[PaperRecord], field: str):
@@ -38,23 +53,23 @@ def _merge_duplicate_records(records: list[PaperRecord]) -> PaperRecord:
 
     Descriptive fields prefer arXiv's version when present. Confirmed
     numeric signals (upvotes, citation_count) are taken specifically from
-    whichever record has the matching *_match flag set -- i.e. whichever
-    source actually confirmed that value -- rather than overwritten by
-    another source's default of 0/False."""
+    whichever record has the matching *_confirmed flag set -- i.e.
+    whichever source actually confirmed that value -- rather than
+    overwritten by another source's default of 0/False."""
     upvotes = 0
-    hf_match = False
+    upvotes_confirmed = False
     for record in records:
-        if record.hf_match:
+        if record.upvotes_confirmed:
             upvotes = record.upvotes
-            hf_match = True
+            upvotes_confirmed = True
             break
 
     citation_count = 0
-    ss_match = False
+    citation_confirmed = False
     for record in records:
-        if record.ss_match:
+        if record.citation_confirmed:
             citation_count = record.citation_count
-            ss_match = True
+            citation_confirmed = True
             break
 
     all_sources = sorted({source for record in records for source in record.sources})
@@ -73,8 +88,8 @@ def _merge_duplicate_records(records: list[PaperRecord]) -> PaperRecord:
         source_count=len(all_sources),
         upvotes=upvotes,
         citation_count=citation_count,
-        hf_match=hf_match,
-        ss_match=ss_match,
+        upvotes_confirmed=upvotes_confirmed,
+        citation_confirmed=citation_confirmed,
     )
 
 
@@ -121,7 +136,8 @@ class DiscoveryTool(BaseTool):
         huggingface_max_results: int = 30,
     ) -> list[dict]:
         """Call all three collector tools directly, combine their results,
-        and deduplicate by arxiv_id before returning."""
+        deduplicate by arxiv_id, and drop anything older than
+        MAX_PAPER_AGE_DAYS before returning."""
         arxiv_records = [
             PaperRecord(**d) for d in ArxivSearchTool()._run(max_results=arxiv_max_results)
         ]
@@ -135,4 +151,5 @@ class DiscoveryTool(BaseTool):
 
         all_records = arxiv_records + openalex_records + huggingface_records
         deduplicated = deduplicate_papers(all_records)
-        return [record.model_dump(mode="json") for record in deduplicated]
+        recent = _filter_recent_papers(deduplicated)
+        return [record.model_dump(mode="json") for record in recent]

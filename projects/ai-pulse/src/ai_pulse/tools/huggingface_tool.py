@@ -54,7 +54,7 @@ def _to_paper_record(item: dict) -> PaperRecord:
         sources=["huggingface"],
         source_count=1,
         upvotes=paper.get("upvotes", 0),
-        hf_match=True,
+        upvotes_confirmed=True,
     )
 
 

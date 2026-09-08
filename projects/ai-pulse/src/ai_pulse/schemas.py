@@ -10,15 +10,18 @@ from pydantic import BaseModel
 
 
 class PaperRecord(BaseModel):
-    """Common shape every collector (arXiv, Semantic Scholar, Hugging Face)
-    must convert its raw API response into, so deduplication, enrichment,
+    """Common shape every collector (arXiv, OpenAlex, Hugging Face) must
+    convert its raw API response into, so deduplication, enrichment,
     scoring, and the report writer never need to know which source a paper
     originally came from.
 
-    hf_match / ss_match mark a *confirmed absence* from that source (so the
-    matching numeric field, e.g. upvotes or citation_count, is a real 0
-    rather than "not checked yet") -- scoring uses these flags to decide
-    whether to trust that field or redistribute its weight elsewhere.
+    upvotes_confirmed / citation_confirmed mark a *confirmed absence* of
+    that signal (so the matching numeric field, upvotes or citation_count,
+    is a real 0 rather than "not checked yet") -- scoring uses these flags
+    to decide whether to trust that field or redistribute its weight
+    elsewhere. Named after what they confirm, not which API confirmed it,
+    since the source behind either signal can change over time (citation
+    data originally came from Semantic Scholar, now comes from OpenAlex).
     """
 
     paper_id: str
@@ -38,11 +41,19 @@ class PaperRecord(BaseModel):
     citation_count: int = 0
     citation_velocity: float = 0.0
     lead_author_h_index: int = 0
-    hf_match: bool = False
-    ss_match: bool = False
+    upvotes_confirmed: bool = False
+    citation_confirmed: bool = False
 
     provisional_score: float = 0.0
     final_score: float = 0.0
+
+
+class PaperCollectionResult(BaseModel):
+    """Wraps the full deduplicated paper list from the collect_and_
+    deduplicate_task. Same reason RelevanceFilterResult exists --
+    output_pydantic needs a single BaseModel, not a bare list."""
+
+    papers: list[PaperRecord]
 
 
 class RelevanceDecision(BaseModel):
