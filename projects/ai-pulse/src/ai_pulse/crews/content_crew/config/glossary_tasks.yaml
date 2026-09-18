@@ -1,0 +1,30 @@
+glossary_task:
+  description: >
+    You are given the complete digest of one research paper (arXiv ID
+    {arxiv_id}), including the technical terms the paper defines and the
+    pages each definition came from. Here it is:
+
+    {digest}
+
+    Choose the 3 to 5 terms from the digest's definitions that a smart
+    beginner most needs in order to understand this paper. Prefer terms
+    central to the paper's main ideas over minor ones. For each term
+    write:
+      - term: the term itself
+      - plain_definition: the definition in plain English a beginner can
+        follow. Simplify the wording, never change the meaning, and never
+        invent a definition the digest does not support
+      - why_it_matters: one or two sentences on why this term matters in
+        THIS paper, based on the digest
+      - example: a short everyday example or analogy that makes the idea
+        concrete
+      - source_pages: copy the source_pages of the definition it came
+        from
+      - arxiv_id: {arxiv_id}
+
+    Only choose terms that appear in the digest's definitions.
+  expected_output: >
+    Between 3 and 5 glossary entries for arXiv paper {arxiv_id}, each
+    with a term, a plain-English definition, why it matters in this
+    paper, a short example, and the pages it came from.
+  agent: glossary_agent

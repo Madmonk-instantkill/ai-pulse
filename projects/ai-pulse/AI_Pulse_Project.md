@@ -1,5 +1,19 @@
 # AI Pulse — Personal AI Intelligence Digest
 
+## 0. Design Changes Since the Original Draft
+
+This spec was written before building. Where a later section disagrees with this one, **this section wins**.
+
+- **Discovery source:** OpenAlex replaces Semantic Scholar for keyword discovery (Semantic Scholar's anonymous tier was rate-limited and unreliable). OpenAlex is filtered to arXiv-hosted works, and also supplies citation counts and lead-author h-index. Semantic Scholar is no longer used.
+- **Pipeline order:** collect → deduplicate → 90-day maximum age cap → LLM relevance filter → enrichment → ranking. Filtering before enrichment avoids wasted API calls.
+- **Enrichment:** every relevance-filtered paper is enriched (no provisional/shortlist stages). Runs are every 48 hours, so the call volume is small.
+- **Ranking:** plain Python, no LLM. Weights live in `config/scoring_config.yaml`. When a signal is unconfirmed, its weight is redistributed instead of scored as zero; a citation count of 0 is treated as unconfirmed, since new papers haven't had time to be cited.
+- **Flags renamed:** `hf_match` / `ss_match` are now `upvotes_confirmed` / `citation_confirmed` (named by what they confirm, not which API confirmed it).
+- **Plain Python vs. LLM:** an LLM is used only where judgment is needed (relevance filter, Map, Reduce, Glossary, Writer, Verifier). Deduplication, enrichment, ranking, PDF extraction, chunking, and delivery are deterministic Python.
+- **MapReduce:** chunks are consecutive pages grouped up to a token budget (3500), not fixed page counts. Map and Reduce are separate crews (Map runs once per chunk, Reduce once per paper). The Reduce digest is internal and deliberately complete; the Writer condenses it for readers.
+- **Glossary:** per-run only, 3–5 terms per paper, fed straight into the report. There is **no** cross-run `running_glossary` archive.
+- **Newsletter:** still planned, not yet built.
+
 ## 1. Project Overview & Problem Statement
 
 **Project Name:** AI Pulse — Personal AI Intelligence Digest

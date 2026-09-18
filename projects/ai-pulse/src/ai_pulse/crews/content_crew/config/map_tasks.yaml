@@ -1,0 +1,34 @@
+# Map stage only. Reduce and glossary tasks live in reduce_tasks.yaml and
+# glossary_tasks.yaml; the newsletter task is still to be defined.
+
+map_summarize_task:
+  description: >
+    You are reading pages {start_page} to {end_page} of the paper with
+    arXiv ID {arxiv_id}. Here is the exact text of these pages:
+
+    {chunk_text}
+
+    From this text alone, extract:
+      - The main ideas being presented
+      - The methods or architecture described (if any)
+      - Important results or findings (if any)
+      - Limitations of this paper's own approach or evidence (if any):
+        things the authors say their method cannot do, assumptions that
+        may not hold, or caveats on their results. Do NOT put gaps in
+        prior work here -- those belong under main ideas
+      - Speculation: hopes, future work, or claims the authors suggest
+        but do not actually demonstrate (if any)
+      - Definitions of any difficult or technical terms introduced, in
+        plain English
+
+    Only extract what is actually present in this text. If a category
+    (for example, results) genuinely is not discussed in these
+    particular pages, return an empty list for it rather than inventing
+    something. Do not use any outside knowledge about this paper -- work
+    only from the text given above.
+  expected_output: >
+    A structured summary with separate lists for main ideas, methods,
+    results, limitations, speculation, and definitions, based only on
+    the text of pages {start_page} to {end_page} of arXiv paper
+    {arxiv_id}.
+  agent: map_summarizer_agent

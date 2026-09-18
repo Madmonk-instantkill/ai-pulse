@@ -1,0 +1,45 @@
+reduce_digest_task:
+  description: >
+    You are given the chunk-by-chunk summaries of one research paper
+    (arXiv ID {arxiv_id}). Each summary covers a range of pages and was
+    written from only that range's text. Here are all of them, in page
+    order:
+
+    {chunk_summaries}
+
+    Merge them into one complete, coherent digest of the whole paper:
+      - Merge ideas that repeat across summaries into a single entry
+      - If summaries contradict each other, resolve it sensibly and
+        record what you resolved in conflicts_resolved
+      - Preserve every important number, percentage, and condition
+        exactly as reported -- never round, drop, or paraphrase away
+        specifics
+      - Keep what the authors actually reported (reported_results)
+        separate from what they only speculate or hope for
+        (authors_speculation, built from the summaries' speculation
+        lists)
+      - Under limitations, keep only things that limit this paper's own
+        approach or evidence. If a summary lists a gap in prior work as
+        a limitation, move it into main_ideas instead
+      - For each definition, give the term, its definition as the paper
+        states it, and the page ranges (for example "pages 3-4") of the
+        summaries it came from in source_pages. Do not simplify or
+        invent definitions
+      - Write an overview: a thorough, multi-paragraph explanation of
+        the whole paper -- the problem, the approach, the evidence, and
+        the caveats
+      - List the candidate factual claims a reader might rely on. For
+        each one, give the page ranges (for example "pages 1-2") of
+        the summaries that support it in source_pages
+
+    Completeness matters more than brevity here. This digest is
+    internal raw material; a later stage will shorten it for readers,
+    so do not shorten it yourself. Work only from the summaries above --
+    do not add outside knowledge about this paper.
+  expected_output: >
+    One complete digest of arXiv paper {arxiv_id}: an overview, merged
+    lists of main ideas, methods, reported results, authors'
+    speculation, and limitations, defined terms and candidate claims
+    each with the pages that support them, and notes on any conflicts
+    resolved.
+  agent: reduce_digester_agent
