@@ -1,0 +1,39 @@
+# Writer stage only (one paper per call).
+
+write_paper_section_task:
+  description: >
+    You are given the complete digest of one research paper (arXiv ID
+    {arxiv_id}) as JSON:
+
+    {digest}
+
+    Write this paper's section of a report for beginners:
+      - what_its_about: a plain-English explanation of the problem and
+        the approach, with no jargon left unexplained
+      - whats_new: what this paper adds that was not there before
+      - why_it_matters: why a newcomer should care
+      - key_results: the 3 to 5 results a newcomer would care about
+        most, each in one plain sentence, with its numbers kept exactly
+        as the digest reports them. Skip formulas, proofs, theorem
+        statements and minor side results. The digest is complete on
+        purpose; your job is to choose and shorten
+      - limitations: the 2 to 4 most important limitations of the
+        paper's own approach, in plain words
+      - claim_ledger: the factual claims your section actually makes
+        (5 to 8 in total, the ones a reader is most likely to rely on).
+        For each one, give the claim in claim_text, and copy the
+        source_pages from the matching claim in the digest's
+        candidate_claims. Never invent or change page ranges. If a
+        claim has no matching entry in the digest, leave it out of the
+        ledger. Write every page range in the form "pages X-Y" (for
+        example "pages 3-4"), even if the digest writes it as "3-4"
+
+    Only use what is in the digest. Do not present the authors'
+    speculation as a proven result. Use the arXiv ID {arxiv_id} in the
+    arxiv_id field.
+  expected_output: >
+    One short beginner-friendly section for arXiv paper {arxiv_id}: the
+    explanation fields, 3 to 5 key results, 2 to 4 limitations, and a
+    claim ledger of 5 to 8 claims where every claim carries the source
+    pages copied from the digest, written as "pages X-Y".
+  agent: paper_writer_agent

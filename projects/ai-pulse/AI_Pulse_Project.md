@@ -12,6 +12,11 @@ This spec was written before building. Where a later section disagrees with this
 - **Plain Python vs. LLM:** an LLM is used only where judgment is needed (relevance filter, Map, Reduce, Glossary, Writer, Verifier). Deduplication, enrichment, ranking, PDF extraction, chunking, and delivery are deterministic Python.
 - **MapReduce:** chunks are consecutive pages grouped up to a token budget (3500), not fixed page counts. Map and Reduce are separate crews (Map runs once per chunk, Reduce once per paper). The Reduce digest is internal and deliberately complete; the Writer condenses it for readers.
 - **Glossary:** per-run only, 3–5 terms per paper, fed straight into the report. There is **no** cross-run `running_glossary` archive.
+- **Writer:** four AI calls, not one: one per paper (a beginner-friendly section plus that paper's claim ledger), then one for the executive summary (report title and intro). The report date is added by code, not the model.
+- **Verifier:** one call per paper, checking each ledger claim against the text of the pages it cites. Claims marked `not_supported` are removed from the ledger and from any key result that is an exact copy; `partially_supported` claims are kept and marked "Check source". The other text fields are not edited.
+- **Cadence:** every **3 days** (not 48 hours), run by Windows Task Scheduler.
+- **Past-papers memory:** `cache/seen_papers.json` records papers already sent (entries expire after 90 days), so the same papers are not chosen again. It is updated only after the email is sent.
+- **Logs:** each run's output is collected in `logs/ai_pulse_<date>_<time>.log`. The log is deleted if the email was sent and nothing went wrong; otherwise it is kept. The exit code is non-zero if the run failed.
 - **Newsletter:** still planned, not yet built.
 
 ## 1. Project Overview & Problem Statement
@@ -655,16 +660,16 @@ Each output should include a version such as `AI_Pulse_2026-09-06_v001.pdf` if m
 
 - **Artifact:** Four-to-five-page PDF generated with ReportLab.
 - **Delivery:** Automated email delivery through SMTP.
-- **Cadence:** Every 48 hours, triggered by Windows Task Scheduler.
+- **Cadence:** Every 3 days, triggered by Windows Task Scheduler.
 - **Newsletter cadence:** One newsletter per run, rotating through TLDR AI, Alpha Signal, and Import AI.
 - **Paper cadence:** Three newly selected research papers per run whenever enough eligible candidates are available.
-- **Deduplication memory:** `seen_papers.json` tracking papers from the previous ten runs.
+- **Deduplication memory:** `cache/seen_papers.json` tracking papers already sent (entries expire after 90 days).
 - **Verification requirement:** The PDF is not generated unless the Source-Traceability Verifier Agent approves the report.
 - **Failure behavior:** If a run fails, preserve the failed-run manifest and cached intermediate data. Retry the failed stage rather than starting from zero when possible.
 
 ### Windows Task Scheduler Command
 
-The exact command depends on the project environment, but the scheduled job should execute the main pipeline entry point every two days:
+The exact command depends on the project environment, but the scheduled job should execute the main pipeline entry point every three days:
 
 ```text
 python -m ai_pulse.main --run-now

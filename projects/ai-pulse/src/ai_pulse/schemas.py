@@ -4,7 +4,7 @@ Copyright (c) 2026 Amit Upadhyay. All rights reserved.
 """
 
 from datetime import date
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -203,3 +203,49 @@ class GlossaryResult(BaseModel):
     not a bare list."""
 
     entries: list[GlossaryEntry]
+
+
+class PaperSection(BaseModel):
+    """One Writer call's output for a single paper: the beginner-friendly
+    section plus that paper's claim ledger. claim_ledger reuses
+    CandidateClaim, so each claim keeps the source_pages copied from the
+    paper's digest. The Verifier checks these claims later. The paper
+    title is not written here -- code attaches it from the PaperRecord."""
+
+    arxiv_id: str
+    what_its_about: str
+    whats_new: str
+    why_it_matters: str
+    key_results: list[str] = []
+    limitations: list[str] = []
+    claim_ledger: list[CandidateClaim] = []
+
+
+class ClaimVerdict(BaseModel):
+    """The Verifier's judgment on one ledger claim, made by comparing the
+    claim to the text of the pages it cites. evidence_quote is the exact
+    text from those pages that supports (or contradicts) the claim, left
+    empty when nothing supports it. note is one short sentence on why."""
+
+    claim_text: str
+    source_pages: list[str] = []
+    status: Literal["supported", "partially_supported", "not_supported"]
+    evidence_quote: str = ""
+    note: str = ""
+
+
+class PaperVerification(BaseModel):
+    """One Verifier call's output: a verdict for every claim in one
+    paper's claim ledger."""
+
+    arxiv_id: str
+    verdicts: list[ClaimVerdict]
+
+
+class ExecutiveSummary(BaseModel):
+    """The last Writer call's output: a title for the whole report and a
+    short intro covering all three papers. The date is not here -- the
+    model can't know today's date, so code adds it."""
+
+    report_title: str
+    summary: str

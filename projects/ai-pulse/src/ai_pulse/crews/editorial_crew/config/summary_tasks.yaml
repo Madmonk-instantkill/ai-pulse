@@ -1,0 +1,20 @@
+# Executive summary stage only (one call per run).
+
+executive_summary_task:
+  description: >
+    Here are the finished sections of every paper in this report, as
+    JSON:
+
+    {sections}
+
+    Write:
+      - report_title: a short, clear title for the whole report
+      - summary: a short introduction (one or two paragraphs) saying
+        what these papers are about together, in plain English for a
+        beginner
+
+    Use only what the sections say. Do not add new facts or numbers.
+  expected_output: >
+    A title for the whole report and a short beginner-friendly
+    introduction covering all the papers.
+  agent: executive_summary_agent

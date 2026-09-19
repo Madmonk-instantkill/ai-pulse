@@ -1,0 +1,31 @@
+# Verifier stage only (one paper per call).
+
+verify_claims_task:
+  description: >
+    You are checking claims about one research paper (arXiv ID
+    {arxiv_id}). Here is the claim ledger as JSON. Each claim lists the
+    pages it says it came from:
+
+    {claims}
+
+    Here is the exact text of those pages:
+
+    {source_text}
+
+    For every claim in the ledger, in the same order, give:
+      - claim_text and source_pages, copied unchanged from the ledger
+      - status: "supported" if the page text clearly says it,
+        "partially_supported" if the text says only part of it or gives
+        a different number or condition, "not_supported" if the text
+        does not say it
+      - evidence_quote: the exact words copied from the page text that
+        support the claim (or that differ from it). Copy it character
+        for character. If nothing supports the claim, leave it empty
+      - note: one short sentence explaining the verdict
+
+    Judge only from the page text above. Do not use outside knowledge
+    of this paper. Do not skip any claim.
+  expected_output: >
+    One verdict for every claim in the ledger of arXiv paper {arxiv_id},
+    each with a status, an exact evidence quote and a short note.
+  agent: claim_verifier_agent

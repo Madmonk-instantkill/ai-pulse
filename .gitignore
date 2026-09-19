@@ -11,3 +11,6 @@ __pycache__/
 # ai-pulse runtime data (cache/output json files, keep dirs via .gitkeep)
 projects/ai-pulse/cache/*.json
 projects/ai-pulse/outputs/*/
+
+# ai-pulse run logs (kept only for failed/degraded runs)
+projects/ai-pulse/logs/
