@@ -35,6 +35,7 @@ from ai_pulse.enrichment import enrich_papers  # noqa: E402
 from ai_pulse.pdf_extraction import extract_paper_text  # noqa: E402
 from ai_pulse.ranking import score_papers  # noqa: E402
 from ai_pulse.reduce import format_summaries_for_reduce  # noqa: E402
+from ai_pulse.relevance import format_papers_for_relevance  # noqa: E402
 from ai_pulse.report_cleanup import remove_rejected_claims  # noqa: E402
 from ai_pulse.run_logging import capture_run_log  # noqa: E402
 from ai_pulse.schemas import (  # noqa: E402
@@ -51,9 +52,11 @@ from ai_pulse.seen_papers import (  # noqa: E402
     remove_seen,
 )
 from ai_pulse.tokenization import annotate_token_counts  # noqa: E402
+from ai_pulse.tools.discovery_tool import DiscoveryTool  # noqa: E402
 from ai_pulse.verification import collect_source_text  # noqa: E402
 
 PAPERS_PER_RUN = 3
+RELEVANCE_BATCH_SIZE = 20
 LLM_ATTEMPTS = 3
 SECONDS_BETWEEN_LLM_CALLS = 5
 SECONDS_BETWEEN_RETRIES = 30
@@ -80,13 +83,21 @@ def run_crew(crew, label: str, inputs: dict | None = None):
 
 
 def select_papers(today: date, problems: list[str]) -> list[PaperRecord]:
-    """Discovery: collect, deduplicate and relevance-filter papers, drop
-    the ones already sent in an earlier report, then enrich, rank and
-    return the top PAPERS_PER_RUN."""
-    result = run_crew(DiscoveryCrew().crew(), "discovery")
-    collected = result.tasks_output[0].pydantic.papers
-    decisions = result.tasks_output[1].pydantic.decisions
-    kept_ids = {d.arxiv_id for d in decisions if d.keep}
+    """Discovery: collect and deduplicate papers in plain Python, have the
+    Scout agent judge relevance in small batches, drop the papers already
+    sent in an earlier report, then enrich, rank and return the top
+    PAPERS_PER_RUN. A paper the agent skips is treated as not relevant."""
+    collected = [PaperRecord(**d) for d in DiscoveryTool()._run()]
+
+    kept_ids: set[str] = set()
+    for start in range(0, len(collected), RELEVANCE_BATCH_SIZE):
+        batch = collected[start:start + RELEVANCE_BATCH_SIZE]
+        result = run_crew(
+            DiscoveryCrew().crew(),
+            f"relevance {start + 1}-{start + len(batch)}",
+            {"papers": format_papers_for_relevance(batch)},
+        )
+        kept_ids |= {d.arxiv_id for d in result.pydantic.decisions if d.keep}
     relevant = [p for p in collected if p.arxiv_id in kept_ids]
 
     fresh = remove_seen(relevant, load_seen_ids(today))

@@ -48,14 +48,6 @@ class PaperRecord(BaseModel):
     final_score: float = 0.0
 
 
-class PaperCollectionResult(BaseModel):
-    """Wraps the full deduplicated paper list from the collect_and_
-    deduplicate_task. Same reason RelevanceFilterResult exists --
-    output_pydantic needs a single BaseModel, not a bare list."""
-
-    papers: list[PaperRecord]
-
-
 class RelevanceDecision(BaseModel):
     """One Scout Agent judgment on a single paper: does it genuinely belong
     in an AI/LLM digest, per the project's positive focus areas and

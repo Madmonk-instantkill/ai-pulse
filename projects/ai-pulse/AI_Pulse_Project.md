@@ -14,7 +14,8 @@ This spec was written before building. Where a later section disagrees with this
 - **Glossary:** per-run only, 3–5 terms per paper, fed straight into the report. There is **no** cross-run `running_glossary` archive.
 - **Writer:** four AI calls, not one: one per paper (a beginner-friendly section plus that paper's claim ledger), then one for the executive summary (report title and intro). The report date is added by code, not the model.
 - **Verifier:** one call per paper, checking each ledger claim against the text of the pages it cites. Claims marked `not_supported` are removed from the ledger and from any key result that is an exact copy; `partially_supported` claims are kept and marked "Check source". The other text fields are not edited.
-- **Cadence:** every **3 days** (not 48 hours), run by Windows Task Scheduler.
+- **Discovery:** collecting and deduplicating papers is plain Python (the Scout agent no longer calls the tool). The Scout agent only judges relevance, on batches of 20 papers (arXiv ID, title, abstract) per call. Having the agent re-type the whole ~100-paper list as its answer got cut off mid-way, so only one paper survived.
+- **Cadence:** every **3 days** (not 48 hours), run by a Windows Task Scheduler task named "AI Pulse" at 8:00 AM. It runs a missed run when the PC is next on, and needs the PC to be on and the user logged in.
 - **Past-papers memory:** `cache/seen_papers.json` records papers already sent (entries expire after 90 days), so the same papers are not chosen again. It is updated only after the email is sent.
 - **Logs:** each run's output is collected in `logs/ai_pulse_<date>_<time>.log`. The log is deleted if the email was sent and nothing went wrong; otherwise it is kept. The exit code is non-zero if the run failed.
 - **Newsletter:** still planned, not yet built.

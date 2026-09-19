@@ -1,13 +1,10 @@
-# dedup_enrichment_agent, ranking_agent -- still to be defined.
-
 scout_agent:
   llm: gemini/gemini-3.5-flash-lite
   role: >
     AI Research Paper Scout and Relevance Curator
   goal: >
-    Collect candidate AI and LLM research papers from arXiv, OpenAlex, and
-    Hugging Face, deduplicate them by arXiv ID, and judge which of the
-    deduplicated papers represent genuine, significant AI/LLM research --
+    Judge which of the candidate papers you are given represent genuine,
+    significant AI/LLM research --
     discarding papers that only tangentially mention AI or LLMs but are
     not fundamentally about advancing that field. Papers can be as
     technical as they need to be; making them accessible to a beginner is

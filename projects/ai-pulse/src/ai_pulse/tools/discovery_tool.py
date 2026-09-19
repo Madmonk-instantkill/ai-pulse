@@ -3,8 +3,9 @@ Written by Amit Upadhyay aka Madmonk-instantkill
 Copyright (c) 2026 Amit Upadhyay. All rights reserved.
 """
 
+import re
 from datetime import date, timedelta
-from typing import Type
+from typing import Optional, Type
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -23,10 +24,35 @@ from ai_pulse.tools.openalex_tool import OpenAlexSearchTool
 MAX_PAPER_AGE_DAYS = 90
 
 
+def _arxiv_id_month_end(arxiv_id: str) -> Optional[date]:
+    """Last day of the month an arXiv ID was issued in. New-style IDs start
+    with YYMM, so 2603.25857 was issued in March 2026. Returns None if the
+    ID does not have that form."""
+    match = re.match(r"(\d{2})(\d{2})\.\d+", arxiv_id)
+    if not match:
+        return None
+    year, month = 2000 + int(match.group(1)), int(match.group(2))
+    if not 1 <= month <= 12:
+        return None
+    return date(year + month // 12, month % 12 + 1, 1) - timedelta(days=1)
+
+
 def _filter_recent_papers(records: list[PaperRecord]) -> list[PaperRecord]:
-    """Drop any paper older than MAX_PAPER_AGE_DAYS."""
+    """Drop any paper older than MAX_PAPER_AGE_DAYS. Two checks: the
+    record's published_date, and the month in its arXiv ID. The second one
+    exists because OpenAlex sometimes reports a recent date for an old
+    paper (a March paper showed up as published in September), while the
+    ID's month cannot be wrong. A paper is dropped by its ID only if that
+    whole month ended before the cutoff, so a recent paper is never lost."""
     cutoff = date.today() - timedelta(days=MAX_PAPER_AGE_DAYS)
-    return [record for record in records if record.published_date >= cutoff]
+
+    def is_recent(record: PaperRecord) -> bool:
+        if record.published_date < cutoff:
+            return False
+        month_end = _arxiv_id_month_end(record.arxiv_id)
+        return month_end is None or month_end >= cutoff
+
+    return [record for record in records if is_recent(record)]
 
 
 def _prefer_arxiv(records: list[PaperRecord], field: str):

@@ -41,12 +41,17 @@ def _fetch_work_by_arxiv_id(arxiv_id: str) -> Optional[dict]:
     return response.json()
 
 
-def _fetch_author_h_index(author_id: str) -> int:
+def _fetch_author_h_index(author_id: str) -> Optional[int]:
     """Fetch an OpenAlex author's h-index by their OpenAlex author ID
-    (e.g. 'https://openalex.org/A5149198713' or just the 'A...' part)."""
+    (e.g. 'https://openalex.org/A5149198713' or just the 'A...' part).
+    Returns None if OpenAlex has no profile for that ID (a merged or
+    removed author still appears on papers), so the caller can treat the
+    h-index as unknown instead of failing."""
     author_id = author_id.rsplit("/", 1)[-1]
     url = f"{OPENALEX_BASE_URL}/authors/{author_id}"
     response = _get_with_backoff(url, {"mailto": "you@example.com"})
+    if response.status_code == 404:
+        return None
     response.raise_for_status()
     summary_stats = response.json().get("summary_stats") or {}
     return summary_stats.get("h_index", 0)
@@ -73,8 +78,12 @@ def _enrich_one(record: PaperRecord) -> PaperRecord:
         lead_author = authorships[0].get("author", {})
         author_id = lead_author.get("id")
         if author_id:
-            updates["lead_author_id"] = author_id
-            updates["lead_author_h_index"] = _fetch_author_h_index(author_id)
+            h_index = _fetch_author_h_index(author_id)
+            # No author profile: leave lead_author_id unset, which ranking
+            # reads as "h-index unknown" and redistributes the weight.
+            if h_index is not None:
+                updates["lead_author_id"] = author_id
+                updates["lead_author_h_index"] = h_index
 
     return record.model_copy(update=updates) if updates else record
 
@@ -85,5 +94,16 @@ def enrich_papers(records: list[PaperRecord]) -> list[PaperRecord]:
     requires no LLM judgment (matching a citation count or an author's
     h-index to a paper is purely mechanical), so it is called directly
     from the Flow between crew stages, never routed through an agent's
-    context."""
-    return [_enrich_one(record) for record in records]
+    context.
+
+    If OpenAlex fails for one paper (after the 429 retries), that paper is
+    kept un-enriched rather than stopping the whole run; ranking treats
+    its missing signals as unknown."""
+    enriched: list[PaperRecord] = []
+    for record in records:
+        try:
+            enriched.append(_enrich_one(record))
+        except requests.RequestException as error:
+            print(f"Enrichment skipped for {record.arxiv_id}: {error}")
+            enriched.append(record)
+    return enriched
